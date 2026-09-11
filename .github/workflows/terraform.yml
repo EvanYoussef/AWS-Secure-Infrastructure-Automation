@@ -11,7 +11,7 @@ on:
 
 jobs:
   terraform:
-    name: Terraform Validate
+    name: Terraform Validate and Security Scan
     runs-on: ubuntu-latest
 
     defaults:
@@ -33,3 +33,12 @@ jobs:
 
       - name: Terraform Validate
         run: terraform validate
+
+      - name: Run Trivy IaC Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: config
+          scan-ref: terraform
+          severity: HIGH,CRITICAL
+          exit-code: 1
+          ignore-unfixed: true
