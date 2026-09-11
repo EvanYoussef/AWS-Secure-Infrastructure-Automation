@@ -64,6 +64,10 @@ resource "aws_vpc" "devsecops_vpc" {
   }
 }
 
+# Lab exception: public IP assignment enables outbound AWS connectivity
+# without adding NAT Gateway/VPC endpoint costs.
+# No inbound security group rules are permitted.
+#trivy:ignore:AWS-0164
 resource "aws_subnet" "public_subnet" {
   vpc_id                  = aws_vpc.devsecops_vpc.id
   cidr_block              = "10.0.1.0/24"
@@ -101,16 +105,19 @@ resource "aws_route_table_association" "public_subnet_association" {
   route_table_id = aws_route_table.public_route_table.id
 }
 
+# Lab exception: outbound HTTPS is required for AWS Systems Manager.
+# Production design would use private VPC endpoints for SSM.
+#trivy:ignore:AWS-0104
 resource "aws_security_group" "devsecops_sg" {
   name        = "devsecops-ec2-sg"
   description = "Security group for DevSecOps EC2 instance"
   vpc_id      = aws_vpc.devsecops_vpc.id
 
   egress {
-    description = "Allow outbound traffic"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
+    description = "Allow outbound HTTPS for aws service communication"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
