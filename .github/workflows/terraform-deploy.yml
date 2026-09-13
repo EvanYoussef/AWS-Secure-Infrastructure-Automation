@@ -2,21 +2,35 @@ name: Terraform Deploy
 
 on:
   workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Type APPLY to deploy the Terraform infrastructure"
+        required: true
+        type: string
 
 permissions:
   contents: read
   id-token: write
 
 jobs:
-  deploy-auth-test:
-    name: Test Deploy Role Authentication
+  deploy:
+    name: Terraform Plan and Apply
     runs-on: ubuntu-latest
 
     environment: production
 
+    if: github.ref == 'refs/heads/main' && inputs.confirm == 'APPLY'
+
+    defaults:
+      run:
+        working-directory: terraform
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v6.2.3
@@ -26,3 +40,15 @@ jobs:
 
       - name: Verify AWS Identity
         run: aws sts get-caller-identity
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        run: terraform plan -no-color -out=tfplan
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve tfplan
