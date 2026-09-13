@@ -149,5 +149,6 @@ resource "aws_instance" "devsecops_server" {
     Environment = "Development"
     Project     = "AWS-Secure-Infrastructure-Automation"
     ManagedBy   = "Terraform"
+    Deployment  = "Github-Actions-CD"
   }
 }
