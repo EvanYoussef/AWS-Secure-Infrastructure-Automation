@@ -63,3 +63,36 @@ jobs:
       - name: Terraform Plan
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: terraform plan -no-color
+
+  deploy:
+    name: Terraform Production Deploy
+    needs: terraform
+
+    defaults:
+      run:
+        working-directory: terraform
+
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v6.2.3
+        with:
+          role-to-assume: arn:aws:iam::716245435474:role/GitHubActions-Terraform-Role
+          aws-region: us-east-1
+
+      - name: Verify AWS Identity
+        run: aws sts get-caller-identity
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
