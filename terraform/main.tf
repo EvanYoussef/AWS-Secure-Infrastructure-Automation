@@ -127,7 +127,7 @@ resource "aws_security_group" "devsecops_sg" {
 }
 
 resource "aws_instance" "devsecops_server" {
-  ami                         = data.aws_ami.amazon_linux.id
+  ami                         = "ami-0b5358cc8c5df0b02"
   instance_type               = "t2.micro"
   subnet_id                   = aws_subnet.public_subnet.id
   vpc_security_group_ids      = [aws_security_group.devsecops_sg.id]
@@ -146,6 +146,32 @@ resource "aws_instance" "devsecops_server" {
 
   tags = {
     Name        = "DevSecOps-Terraform-Server"
+    Environment = "Development"
+    Project     = "AWS-Secure-Infrastructure-Automation"
+    ManagedBy   = "Terraform"
+    Deployment  = "Github-Actions-CD"
+  }
+}
+resource "aws_instance" "private_ip_address" {
+  ami                         = data.aws_ami.amazon_linux.id
+  instance_type               = "t2.micro"
+  subnet_id                   = aws_subnet.public_subnet.id
+  vpc_security_group_ids      = [aws_security_group.devsecops_sg.id]
+  associate_public_ip_address = false
+  iam_instance_profile        = aws_iam_instance_profile.ec2_profile.name
+
+  metadata_options {
+    http_endpoint = "enabled"
+    http_tokens   = "required"
+  }
+
+  root_block_device {
+    encrypted   = true
+    volume_type = "gp3"
+  }
+
+  tags = {
+    Name        = "DevSecOps-Private-Test-Server"
     Environment = "Development"
     Project     = "AWS-Secure-Infrastructure-Automation"
     ManagedBy   = "Terraform"
